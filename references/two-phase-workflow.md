@@ -89,7 +89,9 @@
   `status_reason` 说明"判断已合并且证据已逐字校验"；
 - 有条目被退回 → `status` 仍是 `answered`（只要还有合规判断），
   但退回条目在 `uncertainty` 里可见；
-- 完全没有判断文件 → `status=partial`，`uncertainty` 保留 `judgement_pending`。
+- 没有判断文件 → 脚本自己的确定性判断就是最终判断：交付物成形即
+  `status=answered`，剩余边界写进 `uncertainty`；只有交付物未成形
+  （材料不足/渲染失败）才停在 `partial` 并写明具体原因。
 
 ## 自查
 
