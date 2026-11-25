@@ -9,14 +9,17 @@
 
 ## 这个 Skill 做什么
 
-一条流水线，四段职责，全程可回溯到材料原文：
+一条单次运行的流水线，全程可回溯到材料原文：
 
-| 阶段 | 谁做 | 产物 |
+| 步骤 | 谁做 | 产物 |
 |---|---|---|
 | 1 取证 | `scripts/sk_entry.py` + `scripts/sk_base.py` | 材料 → 段落 id → 证据锚点 |
-| 2 判断 | 执行 Agent（读 `agent_tasks.json`） | `agent_judgement.json`（领域判断） |
-| 3 校验合并 | `scripts/topic.py` | 引文逐字核对，退回编造的条目 |
-| 4 出品 | 赛道专用引擎 | **真实文件**（不是规格描述） |
+| 2 判断与分页 | `scripts/topic.py` + `scripts/pptxgen.py` | 逐页主张、角色、图位、讲稿、claims / answers |
+| 3 出品 | 赛道专用引擎 | **真实文件**（不是规格描述） |
+
+判断由 Skill 自己在同一次运行里完成（页标题=该页主张、图/表登记为图位、
+claims 即页主张），不需要执行 Agent 再补一轮；执行 Agent 若想给出更强判断，
+可写一个可选的 `agent_judgement.json` 覆盖，脚本逐条核验引文后合并。
 
 ## 真实交付物
 
@@ -56,17 +59,12 @@ examples/demo-case/          可离线复现的最小案例
 ## 离线复现
 
 ```bash
-# 阶段 A：取证 + 出任务单
-python scripts/sk_entry.py --input examples/demo-case --work /tmp/w --out /tmp/o
-cat /tmp/w/agent_tasks.json
-
-# 阶段 B：照任务单写判断（模板见 examples/demo-case/agent_judgement.example.json）
-#   → /tmp/w/agent_judgement.json
-
-# 阶段 C：校验引文并合并进 result.json
+# 一次运行就产出完整交付（deck.pptx + 逐页 SVG/PNG + 讲稿 + 证据映射）
 python scripts/sk_entry.py --input examples/demo-case --work /tmp/w --out /tmp/o
 ls -l /tmp/o
 ```
+
+可选：先写 `/tmp/w/agent_judgement.json` 再跑同一条命令，脚本会校验引文后合并。
 
 ## 自检
 
