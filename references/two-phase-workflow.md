@@ -8,22 +8,23 @@
 `status=answered`，剩余边界（读不出的文件、缺渲染器、PDF 是否矢量）逐条写进
 `uncertainty`。材料不足或渲染失败时才停在 `partial`，并写明具体缺什么。
 
-## 可选覆盖（两阶段）
+## 可选覆盖（在同一份工作目录上多跑一次）
 
-如果执行 Agent 想用自己的领域判断覆盖脚本判断：
+默认运行已经产出最终判断。如果执行 Agent 想用自己的领域判断覆盖脚本判断，
+只需在 `/app/work` 下写一个 `agent_judgement.json`，再执行**同一条命令**：
 
 ```
-阶段 A（脚本）  材料 → 证据索引 → result.json + agent_tasks.json
+第一次运行（脚本）  材料 → 证据索引 → result.json + agent_tasks.json
+      ↓（可选）
+写覆盖文件（你）    参考 agent_tasks.json 的证据锚点 → agent_judgement.json
       ↓
-阶段 B（你）    读 agent_tasks.json → 写 agent_judgement.json
-      ↓
-阶段 C（脚本）  校验 agent_judgement.json → 合并进 result.json
+再运行一次（脚本）  逐条校验引文 → 合并进 result.json，覆盖条目优先
 ```
 
 覆盖条目要过引文校验闸门；未通过的条目被退回并记录原因，脚本保留自己的
 确定性判断作为兜底。**跳过覆盖不会降级** —— 脚本自己的判断就是最终判断。
 
-## 阶段 A 的产物：agent_tasks.json
+## 第一次运行的产物：agent_tasks.json
 
 | 字段 | 用途 |
 |---|---|
@@ -35,13 +36,13 @@
 | `what_to_judge` | 需要你判断的四件事 |
 | `how_to_write_the_judgement` | 判断文件的结构与规则 |
 
-## 阶段 B 的产物：agent_judgement.json（或直接写 result.json）
+## 覆盖文件：agent_judgement.json（或直接写 result.json）
 
 两种写法任选其一：
 
 - **(a)** 写 `/app/work/agent_judgement.json`（推荐）；
-- **(b)** 直接把判断写进 `/app/output/result.json` —— 脚本在阶段 A 先把已有
-  的 `result.json` 留底，阶段 C 再把你写的契约键取出来合并，**不会覆盖你的内容**。
+- **(b)** 直接把判断写进 `/app/output/result.json` —— 脚本会先把已有
+  的 `result.json` 留底，合并时把你写的契约键取出来，**不会覆盖你的内容**。
 
 判断文件的结构：
 
@@ -66,7 +67,7 @@
 }
 ```
 
-## 阶段 C 的校验闸门
+## 合并前的校验闸门
 
 脚本在合并前逐条检查，**不通过就退回**：
 
